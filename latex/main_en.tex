@@ -1,0 +1,687 @@
+\documentclass[11pt,a4paper,twoside,pdf]{article}
+
+% Encoding and typography
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathpazo}
+\usepackage{braket}
+
+% Mathematics
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{bm}
+\usepackage[mathscr]{euscript}
+
+% Figures
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+
+% Tables and utilities
+\usepackage{multirow}
+\usepackage{rotating}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{xspace}
+
+% Additional symbols
+\usepackage{eurosym}
+\usepackage{bbding}
+\usepackage{pifont}
+
+% Other packages
+\usepackage{soul}
+\usepackage{color}
+\usepackage{latexsym}
+\usepackage{xtab}
+
+% Hyperlinks
+\usepackage[colorlinks=true,urlcolor=blue,linkcolor=blue,citecolor=blue]{hyperref}
+
+% Equation numbering
+\numberwithin{equation}{section}
+
+% Margins
+\usepackage[top=2.88cm,bottom=2.97cm,left=2.95cm,right=2.95cm]{geometry}
+
+% Language
+\usepackage[english]{babel}
+
+% Headers
+\usepackage{fancyhdr}
+\setlength{\headheight}{13.6pt}
+
+% Theorems
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+
+% Custom commands
+\newcommand{\dis}{\displaystyle}
+
+\linespread{1.05}
+
+% Reduce vertical spacing around equations and floats
+\setlength{\abovedisplayskip}{5pt plus 2pt minus 2pt}
+\setlength{\belowdisplayskip}{5pt plus 2pt minus 2pt}
+\setlength{\abovedisplayshortskip}{2pt plus 2pt}
+\setlength{\belowdisplayshortskip}{4pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{8pt plus 2pt minus 4pt}
+\setlength{\intextsep}{5pt plus 2pt minus 2pt}
+
+\begin{document}
+
+\raggedbottom
+
+% Cover page %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\pagestyle{empty}
+
+\noindent
+\begin{tabular}{r}
+\includegraphics[width=8.8cm]{escudoUGRmonocromo.png} \\[-1.8ex]
+\hspace{31mm}\vspace{-8mm}
+\begin{tabular}{c}
+\hline\\[-1ex]\hskip-2mm
+{\bf International School}\vspace{1mm}\\
+{\bf of Postgraduate Studies}\hspace{18mm}
+\end{tabular}
+\end{tabular}
+
+\large
+\vspace{10mm}
+\hspace{25mm}
+\begin{tabular}{l}
+MASTER'S DEGREE IN PHYSICS AND MATHEMATICS -- FISYMAT
+\end{tabular}
+
+
+\vspace{5mm}
+\hspace{25mm}
+\begin{tabular}{l}
+COMPUTATIONAL METHODS \\
+IN NON-LINEAR PHYSICS
+\\[1.5ex]
+\LARGE\bf STATISTICAL QUANTUM \\
+\LARGE\bf MECHANICS
+\end{tabular}
+
+\vspace{5mm}
+
+\hspace{2mm}
+\begin{tabular}{l}
+By:
+\\
+{\bf Ali-Salem Amari }\\
+\end{tabular}
+
+\vspace{5mm}
+
+\begin{abstract}
+\normalsize
+
+We reproduce the results of Creutz and Freedman \cite{creutz1981statistical}, where the Monte Carlo method is applied to the path integral in Euclidean (imaginary) time to study one-dimensional quantum mechanics problems. After a Wick rotation, the oscillatory weight $e^{iS/\hbar}$ of the Feynman formulation becomes a real positive weight $e^{-S_E/\hbar}$ formally identical to the Boltzmann distribution of a classical statistical system, enabling path configurations to be sampled via the $M(RT)^2$ (Metropolis) algorithm. We analyse the harmonic oscillator (method validation), the anharmonic oscillator, the double well and its instanton content, as well as the system response to an external source and the construction of the renormalised effective potential. Simulations are performed on a temporal lattice of $N=200, 400$ sites with periodic boundary conditions, or antiperiodic conditions in the case of kinks.
+
+\end{abstract}
+
+
+\vspace{1mm}
+
+% Table of contents %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+\tableofcontents
+
+
+% Main text %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\pagestyle{fancy}
+\fancyhead[RO,LE]{\leftmark}
+\fancyhead[LO,RE]{\thepage}
+\fancyfoot{}
+
+
+\newpage
+
+
+\section{Introduction}
+
+The propagator
+
+\begin{equation}
+    K(x_b, t_b; x_a, t_a) = \braket{x_b | \hat{U}(t_b, t_a) | x_a},
+    \label{Kdef}
+\end{equation}
+
+where $\hat{U}(t_b, t_a) = e^{-i\hat{H}(t_b - t_a)/\hbar}$ is the time-evolution operator, is the cornerstone of the system dynamics and allows the wave function at $x_b$ at time $t_b$ to be obtained by $propagating$ the wave function $\Psi$ at $x_a$ at time $t_a$:
+
+\begin{equation}
+    \Psi(x_b, t_b) = \int K(x_b, t_b; x_a, t_a) \Psi(x_a, t_a) \, dx_a.
+\end{equation}
+
+
+In Feynman's path-integral formulation the probability amplitude to find the particle at $x_b$ at time $t_b$, given that it was at $x_a$ at time $t_a$, is evaluated as a sum over all possible $paths$ connecting both space-time points \cite{feynman2010quantum}:
+
+\begin{equation}
+    K(x_b, t_b; x_a, t_a) = \int  e^{i S[x(t)]/\hbar} \,\mathcal{D} x(t),
+    \label{pathint}
+\end{equation}
+
+where $S[x(t)] = \int_{t_a}^{t_b} L(\dot{x}, x; t) \, dt$ is the classical action of the path. The functional measure $\mathcal{D}x(t)$ indicates integration over all trajectories such that $x(t_a) = x_a$ and $x(t_b) = x_b$; although this is formal and has no rigorous definition as a measure on function space, it acquires meaning after temporal discretisation and a Wick rotation to imaginary time \cite{galindo1990quantum}. \medskip
+
+
+\subsection{Rotation to Euclidean time}
+\label{Wick}
+
+
+The integrand of the real-time path integral is a highly oscillatory phase, making direct numerical evaluation impossible: cancellation between positive and negative phases prevents a random sampling method from converging. The solution, due to Kac \cite{galindo1990quantum}, is to perform the substitution
+
+\begin{equation}
+    t \;\to\; -i\tau, \qquad \tau \in \mathbb{R}^+,
+    \label{wick}
+\end{equation}
+
+so that the action $S[x(t)]$ is transformed into the Euclidean action
+
+\begin{equation}
+    S_E[x(\tau)] = \int_0^{T} \left[ \frac{m}{2} \left( \frac{dx}{d\tau} \right)^2 + V(x) \right] \, d\tau,
+    \label{Seuclid}
+\end{equation}
+
+with $T = -i(t_b - t_a)$. The Euclidean path integral
+
+\begin{equation}
+    Z(x_b, T; x_a, 0) = \int e^{-S_E[x(\tau)]/\hbar} \mathcal{D} x(\tau) \,
+    \label{Zeuclid}
+\end{equation}
+
+now has a \textit{real and positive} integrand, formally identical to the canonical partition function of statistical physics with energy $S_E$. The paths $x(\tau)$ are reinterpreted as $configurations$ of a statistical system, and $\hbar$ plays the role of an effective temperature controlling the magnitude of fluctuations.
+
+
+
+\subsection{Lattice discretisation}
+\label{red}
+
+
+For numerical evaluation, continuous time is replaced by a lattice of $N$ equally spaced points with spacing $\varepsilon$ such that $t_{n+1} - t_n = \varepsilon$. Using the notation $x(t_n) = x_n$, a configuration of the system is determined by the set of points $\{x_1, x_2, \ldots, x_N\}$. The time derivative is replaced by its finite-difference version, and the action \ref{Seuclid} takes the discrete form
+
+\begin{equation}
+    S_E^{\rm latt} = \sum_{n=1}^{N} \left[ \frac{m_0}{2} \!\left( \frac{x_{n+1} - x_n}{a} \right)^2 + V(x_n) \right] a,
+    \label{Slatt}
+\end{equation}
+
+with $m_0$ the mass in lattice units and $a=i\varepsilon$. The full propagator is expressed as
+
+\begin{equation}
+    Z = \int_{-\infty}^{+\infty} e^{-S_E^{\rm latt}/\hbar} dx_{ {1, 2, \ldots, N-1} },
+\end{equation}
+
+where the notation $\prod_{n=1}^{N-1} dx_n \equiv dx_{1, 2, \ldots, N-1}$ is used, and the integral extends over all configurations satisfying the boundary conditions $x_0 = x_{a}$ and $x_N = x_b$.
+
+The expectation value of an observable $\hat{O}(\mathbf{x})$ is obtained as an average over this probability distribution:
+
+\begin{equation}
+    \braket{\hat{O}} = \frac{1}{Z} \int_{-\infty}^{+\infty} \hat{O}(\mathbf{x})\, e^{-S_E^{\rm latt}/\hbar} dx_{1, 2, \ldots, N-1},
+    \label{esperanza}
+\end{equation}
+
+where $\mathbf{x} \equiv \{x_1, x_2, \ldots, x_N\}$ denotes a complete lattice configuration.
+
+
+
+
+\subsection{The $M(RT)^2$ (Metropolis) algorithm}
+\label{metropolis}
+
+
+The observable \ref{esperanza} is an integral in $N$ dimensions, with $N = 200, 400$ in this work. A deterministic method would scale as $\sim M^N$ with $M$ the number of points evaluated per dimension, which is computationally impossible. Furthermore, the weight $e^{-S_E/\hbar}$ is concentrated in an exponentially small region of configuration space, so that the vast majority of possible $paths$ contribute negligibly to the integral, making uniform accept/reject sampling inefficient. \medskip
+
+
+The idea of Monte Carlo methods is to estimate \ref{esperanza} as a statistical average over $M$ configurations $\{\mathbf{x}^{(m)}\}_{m=1}^{M}$ distributed \emph{according to the Boltzmann distribution} $p(\mathbf{x}) = e^{-S_E^{\rm latt}/\hbar}/Z$, so that the expectation value is estimated by evaluating the observable on these configurations and averaging:
+
+\begin{equation}
+    \braket{\hat{O}} \;\approx\; \frac{1}{M}\sum_{m=1}^{M} \hat{O}\!\left(\mathbf{x}^{(m)}\right),
+    \label{MCestimator}
+\end{equation}
+
+with a statistical error that decreases as $1/\sqrt{M}$ \emph{independently of the dimension} \cite{kalos2008monte}. The problem is now to generate configurations $\mathbf{x}^{(m)}$ distributed according to $p(\mathbf{x})$, where moreover $Z$ is unknown.\bigskip
+
+
+The $M(RT)^2$ or Metropolis algorithm \footnote{The name $M(RT)^2$ for the famous Metropolis algorithm is due to the fact that it includes the Rosenbluth and Teller couples who are believed to have devised the original method, while Metropolis only provided the computational resources \cite{kalos2008monte}.} \cite{metropolis1953equation} allows configurations distributed according to $p(\mathbf{x})$ to be sampled by constructing a Markov chain $\mathbf{x}^{(0)}\to \mathbf{x}^{(1)}\to \mathbf{x}^{(2)}\to\cdots$ whose stationary distribution coincides with $p(\mathbf{x})$, without needing to know the normalisation constant $Z$. The acceptance rule depends only on the ratio $p(\mathbf{x}')/p(\mathbf{x}) = e^{-\Delta S/\hbar}$, and under the conditions of detailed balance and ergodicity the chain visits each configuration with asymptotic frequency $p(\mathbf{x})$, and the estimate \ref{MCestimator} converges to the exact value in the limit $M \to \infty$.\medskip
+
+
+The $M(RT)^2$ algorithm for updating a configuration $\mathbf{x} = \{x_1, \ldots, x_N\}$ is based on proposals to change a randomly chosen lattice site $n$, which are accepted or rejected according to the local variation of the action $\Delta S$:
+
+\begin{itemize}
+    \item Proposal: displace $x_n \to x_n' = x_n + u\cdot \Delta$, with $u \sim \mathcal{U}(-1, 1)$ (uniform in $(-1, 1)$), and $\Delta$ a fixed parameter.
+
+    \item Local action variation:
+
+    \begin{equation}
+    \begin{split}
+        \Delta S &= \frac{m_0}{2a} \left[ (x_n' - x_{n-1})^2 + (x_{n+1} - x_n')^2 - (x_n - x_{n-1})^2 - (x_{n+1} - x_n)^2 \right] \\
+                 &\quad + a \left[ V(x_n') - V(x_n) \right].
+    \end{split}
+    \label{deltaS}
+    \end{equation}
+
+    \item Acceptance: the move is accepted with probability $\min(1,\, e^{-\Delta S/\hbar})$.
+\end{itemize}
+
+
+The local character of $\Delta S$ means it depends only on the neighbours $x_{n\pm 1}$, so each step has cost $\mathcal{O}(1)$ and a full sweep $\mathcal{O}(N)$. The parameter $\Delta$ is tuned to maintain an acceptance rate close to $70\%$. \medskip
+
+
+Although the Markov chain converges to the Boltzmann distribution, consecutive configurations are correlated since they differ in at most $N$ sites, which reduces statistical efficiency. Therefore, $n_{\rm skip}$ decorrelation sweeps are performed between measurements, and before measurements begin $n_{\rm therm}$ thermalisation sweeps are discarded to eliminate dependence on the initial configuration. The statistical uncertainty is estimated by running $n_r$ independent chains in parallel (realisations), averaging the $\braket{\hat{O}}_{r}$ of each chain and taking as error the standard deviation of the mean between chains, $\sigma_{\braket{\hat{O}}} = \sigma_{\hat{O}}/\sqrt{n_r}$.
+
+A computationally more efficient alternative is to divide a single chain into $n_r$ blocks, averaging each block to obtain $n_r$ independent estimates of the observable, and taking the standard deviation of the mean between blocks as the statistical error. This method is equivalent to running $n_r$ independent chains with $n_{\rm meas}/n_r$ measurements each, but avoids the bottleneck of initialising multiple chains. In each case the method used to estimate the error is specified in the corresponding section.
+
+
+
+\subsection{Observables}
+\label{obs}
+
+The ground-state energy is obtained from the virial theorem \cite{creutz1981statistical}, which for a potential of the form $V(x) = \frac12 \mu^2 x^2 + \lambda x^4$ takes the form
+
+\begin{equation}
+    E_0 = \mu^2 \braket{x^2} + 3\lambda \braket{x^4}.
+    \label{virial}
+\end{equation}
+
+\medskip
+
+The first excited state is extracted from the two-point correlation function
+
+\begin{equation}
+    G(\tau) = \braket{x(0)\, x(\tau)}
+\end{equation}
+
+which on a finite lattice of size $T = Na$ and with $T \gg 1/(E_1 - E_0)$ approaches\footnote{From here on we work in units $\hbar = 1$.}
+
+\begin{equation}
+    G(\tau) \sim |\!\braket{0|\hat{x}|1}\!|^2 \, e^{-(E_1 - E_0)\tau},
+\end{equation}
+
+so that the ratio of consecutive values provides an estimate of the gap $E_1 - E_0$:
+
+\begin{equation}
+    E_1 - E_0 \;\approx\; \frac{1}{a}\ln \frac{G(\tau)}{G(\tau + a)}.
+    \label{E1mE0}
+\end{equation}
+
+The estimator is evaluated at a value of $\tau$ not too small (so that the ground state already dominates the spectral sum) nor too large (so that $G(\tau)$ still stands above the statistical noise).
+
+
+Finally, coupling an external source $J$ to the system via $S_E \to S_E + J \sum_n x_n$ and integrating yields the renormalised effective potential \cite{creutz1981statistical}:
+
+\begin{equation}
+    V_R(x_J) = -\int_{x_{J,0}}^{x_J} J(x') \, dx',
+    \label{VR}
+\end{equation}
+
+which captures the low-energy dynamics and possesses, by construction, the same symmetries as the original Hamiltonian.
+
+
+
+\subsection{Simulation details}
+\label{params}
+
+In all simulations presented here, a temporal lattice of $N = 200, 400$ sites with periodic or antiperiodic boundary conditions and spacing $a \in [0.5, 0.05]$ in natural units has been used. The mass is fixed at $m_0 = 1, 0.5$ and the Markov chain parameters are
+
+\begin{equation*}
+    n_{\rm therm} = 1000 \,\text{--} \, 3000 \qquad n_{\rm meas} = 3000 \, \text{--} \, 30000 \qquad n_{\rm skip} = 5 \qquad n_r =  10 \, \text{--} \, 100
+\end{equation*}
+
+with a proposal step $\Delta$ adjusted in each simulation to obtain an acceptance rate in the range $60\%$--$70\%$. Measurements are taken after $n_{\rm therm}$ thermalisation sweeps, and the errors reported correspond to the standard deviation of the mean between the $n_r$ independent chains or samples within a single chain, as specified in each section.
+
+
+
+
+\section{Harmonic oscillator}
+
+As a validation of the method we consider the one-dimensional harmonic oscillator with potential
+
+\begin{equation}
+    V(x) = \frac{1}{2} \mu^2 x^2
+\end{equation}
+
+which has an exact solution in terms of Hermite polynomials. The theoretical values to compare with the simulation, in units ($\hbar = m_0 = 1$, $\mu = \omega$), are
+
+\begin{equation}
+    E_0 = \frac{\mu}{2}, \quad E_1 - E_0 = \mu, \quad |\psi_0(x)|^2 = \sqrt{\frac{\mu}{\pi}}\, e^{-\mu x^2}
+    \notag
+\end{equation}
+
+\begin{equation}
+    \braket{x^2} = \frac{1}{2\mu}, \quad \braket{x^4} = \frac{3}{4\mu^2}.
+    \nonumber
+\end{equation}
+
+with $\mu^2 = 1$.
+
+
+
+\subsection{Ground state and first excited state}
+
+Figure \ref{caminosarmonico} shows the evolution of a typical path during the first iterations of the simulation, starting from a random configuration uniformly distributed in $(-1, 1)$. The amplitude of the fluctuations stabilises around the ground-state scale $1/\sqrt{2\mu}$. After thermalisation, the system visits configuration space with probability proportional to $|\psi_0(x)|^2$.\medskip
+
+
+
+The normalised histogram of visited positions accurately reproduces the theoretical ground-state distribution $|\psi_0(x)|^2$, as shown in figure \ref{psi0armonico}. Agreement is uniform over the entire range of $x$. Table \ref{tab:armonico} shows the numerical values of the main observables compared with their exact values. The ground-state energy estimated by the virial theorem is
+
+\begin{equation*}
+    E_0 = 0.4849 \pm 0.0005,
+\end{equation*}
+
+with a deviation of $3\%$ from the analytical value $E_0 = \mu/2 = 0.5$. The small discrepancies arise from systematic errors due to the temporal discretisation and from the statistical error of the simulation, estimated at $0.0005$ from the standard deviation between 10 independent chains. For $\braket{x^4}$ we obtain $0.7058 \pm 0.0013$, with a deviation of $6\%$ from the theoretical value $0.75$. In both cases, the statistical error is small but insufficient to fully account for the difference, suggesting that discretisation is the main source of systematic error.
+
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_01_caminos_armonico.png}
+    \caption{Five Markov chain paths for the harmonic oscillator, taken at iterations $\{0, 50, 200, 1000, 5000\}$. Parameters: $V(x)=\frac{1}{2}\mu^2 x^2$ with $\mu^2 = 1$, mass $m_0 = 1$ and $\hbar = 1$; lattice of $N=200$ temporal sites with spacing $a = 0.5$ and periodic boundary conditions; $M(RT)^2$ step $\Delta = 0.8$. Random uniform initialisation $x_n \in (-1, 1)$. The configuration stabilises after $\sim 200$--$1000$ iterations, reaching the stationary distribution of the ground state.}
+    \label{caminosarmonico}
+\end{figure}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_05_psi0_armonico.png}
+    \caption{Ground-state wave function $|\psi_0(x)|^2$ of the harmonic oscillator. Normalised histogram of positions visited by the Markov chain (blue bars, 80 bins in $x \in [-3.5, 3.5]$) compared with the analytical prediction $|\psi_0(x)|^2 = \sqrt{\mu/\pi}\,e^{-\mu x^2}$ (red line). Parameters: $V(x)=\frac{1}{2}\mu^2 x^2$ with $\mu^2 = 1$, $m_0 = 1$, $\hbar = 1$; lattice $N=200$, $a = 0.5$ (physical length $T = Na = 100$). Averaged over $n_r = 10$ independent chains with $n_{\rm therm} = 1500$ thermalisation sweeps, $n_{\rm meas} = 8\,000$ measurements and $n_{\rm skip} = 5$ decorrelation sweeps between measurements (acceptance rate: $68.0\%$).}
+    \label{psi0armonico}
+\end{figure}
+
+\medskip
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcc}
+    \toprule
+    Observable & Monte Carlo & Theoretical \\
+    \midrule
+    $\braket{x^2}$       & $0.4849 \pm 0.0005$ & $0.5000$ \\
+    $\braket{x^4}$       & $0.7058 \pm 0.0013$ & $0.7500$ \\
+    $E_0$ (virial)        & $0.4849 \pm 0.0005$ & $0.5000$ \\
+    \bottomrule
+    \end{tabular}
+    \caption{Observables of the harmonic oscillator ($V = \frac{1}{2}\mu^2 x^2$ with $\mu^2 = 1$, $m_0 = 1$, $\hbar = 1$) simulated on a lattice of $N = 200$ sites with $a = 0.5$, and analytical values. Errors are the standard deviation of the mean between $n_r = 10$ independent chains, each with $n_{\rm meas} = 8\,000$ measurements taken after $n_{\rm therm} = 1\,500$ thermalisation sweeps and $n_{\rm skip} = 5$ decorrelation sweeps between measurements.}
+    \label{tab:armonico}
+\end{table}
+
+
+
+The two-point correlation function $G(\tau)$ is shown in figure \ref{correladorarmonico}, where very good agreement with the theoretical curve is observed. The effective mass $E_{\rm eff}$, defined as the energy gap $E_1 - E_0$ estimated from the pointwise ratio \ref{E1mE0}, is also shown. Agreement with the theoretical curve is good, although statistical noise makes the pointwise ratio a poor estimator at large times. A larger number of realisations $n_r$ and measurements $n_{\rm meas}$ would reduce the statistical error and improve agreement.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_03_correlador_armonico.png}
+    \caption{(Left) Two-point correlation function $G(\tau) = \langle x(0)x(\tau)\rangle$ of the harmonic oscillator; points: Monte Carlo simulation, red line: analytical expression $G(\tau) = \cosh[\mu(T/2-\tau)]/\sinh(\mu T/2) / 2\mu$ with $T = Na = 100$. (Right) Effective mass $E_{\rm eff}(\tau) = \ln[G(\tau)/G(\tau+a)]/a$. Red line: \emph{theoretical effective mass} derived from the cosh, $E_{\rm eff}^{\rm th}(\tau) = \ln\{\cosh[\mu(T/2-\tau)]/\cosh[\mu(T/2-\tau-a)]\}/a$. Grey dotted line: $\mu$. Parameters: $\mu^2 = 1$, $m_0 = 1$, $N = 200$, $a = 0.5$, $\hbar = 1$. Average over $n_r = 10$ independent chains, $n_{\rm meas} = 30\,000$ measurements for the correlation function, $n_{\rm therm} = 1500$, $n_{\rm skip} = 5$.}
+    \label{correladorarmonico}
+\end{figure}
+
+
+
+
+\section{Anharmonic oscillator}
+
+
+We consider the anharmonic potential
+
+\begin{equation}
+    V(x) = \lambda(x^2 - f^2)^2,
+    \label{Vanarm}
+\end{equation}
+
+with $\lambda > 0$ and $f^2 \in \mathbb{R}$ a parameter controlling the shape of the potential: for $f^2 > 0$, $V(x)$ is a double well with two degenerate classical minima at $x = \pm x_c$ with $x_c = \sqrt{f^2}$, separated by a barrier of height $V(0) - V(\pm x_c) = \lambda f^4$; for $f^2 \le 0$, $V(x) = \lambda(x^2 + |f^2|)^2$ is a single well centred at the origin. The transition occurs at $f^2 = 0$. \medskip
+
+
+
+Unlike the harmonic oscillator, no closed analytical solution exists for the energy levels, although accurate reference values are available \cite{degrand1980numerical}.
+
+
+
+\subsection{Ground-state wave function}
+
+
+Figure \ref{psianarmonico} shows $|\psi_0(x)|^2$ for four cases. The first three use the equivalent form $V = \tfrac{1}{2}\mu^2 x^2 + \lambda x^4$ (with $m_0 = 1$, $a = 0.5$), showing the transition between regimes as $\mu^2$ varies from positive to negative. The fourth shows the probability density for $V = \lambda(x^2-f^2)^2$, $f^2 = 2$ and $m_0 = 0.5$.
+
+
+In the first three panels the squared modulus of the wave function has an approximately Gaussian shape, with peaks that flatten and tend to broaden as the central barrier becomes more pronounced, but without showing a clearly defined double-peak structure. In the fourth panel the probability density shows two well-defined peaks at $\pm x_c = \pm\sqrt{2}$, which is the symmetric combination of Gaussians localised in each well.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{figs/fig_08_09_psi_anarmonico.png}
+    \caption{Squared modulus of the ground-state wave function $|\psi_0(x)|^2$ of the anharmonic oscillator. Blue bars (left Y axis): normalised position histogram from the simulation. Red dashed line (right Y axis): potential $V(x)$. \textbf{Panels 1--3}: $V(x) = \frac{1}{2}\mu^2 x^2 + \lambda x^4$ with $\lambda=1$ and $\mu^2 = +1$ (single well), $-1$ (soft double well, $x_c=\pm 0.5$) and $-3$ (pronounced double well, $x_c=\pm 0.87$), where $x_c^2 = -\mu^2/(4\lambda)$. Parameters: $m_0 = 1$, $\hbar = 1$, lattice $N = 200$, $a = 0.5$, $n_r = 10$ chains with $n_{\rm therm} = 1\,500$, $n_{\rm meas} = 5\,000$, $n_{\rm skip} = 5$. \textbf{Panel 4}: $V(x) = \lambda(x^2 - f^2)^2$ with $\lambda = 1$, $f^2 = 2$, $m_0 = 0.5$, $a = 0.25$, $N = 200$. The probability density shows two well-defined peaks at $\pm x_c = \pm\sqrt{2}\approx\pm 1.41$. Histogram with $80$ bins in $x \in [-3.5, 3.5]$.}
+    \label{psianarmonico}
+\end{figure}
+
+
+
+\subsection{Energy levels and continuum convergence}
+\label{nivelesanarmonicosec}
+
+
+The first two energy levels $E_0$ and $E_1$ of the anharmonic oscillator $V = \lambda(x^2 - f^2)^2$ are computed as a function of $f^2$, with $\lambda = 1$ and $m_0 = 1/2$. We also study whether the lattice spacing $a$ is fine enough for the Monte Carlo spectrum calculation. \medskip
+
+
+For the ground state the virial theorem is applied; for this potential it gives
+
+\begin{equation}
+    E_0 = \lambda\!\left(3\braket{x^4} - 4 f^2 \braket{x^2} + f^4\right),
+    \label{virialCR}
+\end{equation}
+
+with $\braket{x^2}$ and $\braket{x^4}$ averaged over the Monte Carlo configurations. For the first excited state the correlation-function estimator \ref{E1mE0} is used, evaluated at $\tau$ of the order of the step $a$ (where the ground state already dominates the spectral sum but $G(\tau)$ still stands above the statistical noise).
+
+
+For the convergence study, a sweep in $a$ is performed keeping the physical size $T = N\!\cdot\!a = 50$ fixed (so that the physical geometry does not change when refining the mesh):
+
+\begin{equation*}
+    a \in \{0.50,\, 0.25,\, 0.10,\, 0.05\}, \qquad N \in \{100,\, 200,\, 500,\, 1000\}.
+\end{equation*}
+
+Figure \ref{nivelesanarmonico} shows the result: left panel $E_0$, right panel $E_1$, both compared with the continuum theory (interpolation of the Blankenbecler-DeGrand-Sugar reference values \cite{degrand1980numerical}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{figs/fig_10_niveles_anarmonico.png}
+    \caption{Convergence analysis of the first two energy levels of the oscillator $V(x) = \lambda(x^2-f^2)^2$ with $\lambda = 1$ and $m_0 = 1/2$. \textbf{Left}: $E_0$ via virial theorem \ref{virialCR}. \textbf{Right}: $E_1$ via the pointwise estimator \ref{E1mE0} applied to the correlation function with $\tau$ chosen as $\tau\sim 1.5/(E_1\!-\!E_0)$ from an initial gap estimate. Black solid lines: \emph{continuum theory} (interpolation of the reference values of \cite{degrand1980numerical}). Points with error bars: Monte Carlo at four spacings $a \in \{0.50, 0.25, 0.10, 0.05\}$ (purple to yellow) with $N$ adjusted to keep $T = N\!\cdot\!a = 50$ fixed. For each $(a, f^2)$, a single chain is thermalised for $n_{\rm therm} = 1\,000$ sweeps and then performs $n_{\rm bloques} = 100$ pseudo-independent measurements separated by $n_{\rm therm}$ re-relaxation sweeps; within each block $n_{\rm meas} = 1\,000$ measurements are averaged with $n_{\rm skip} = 5$ decorrelation sweeps. The error is the standard deviation of the mean between blocks. For $f^2 > 0$ chains are initialised at $+x_c$.}
+    \label{nivelesanarmonico}
+\end{figure}
+
+
+Table \ref{tab:niveles} shows the numerical values for various values of $f^2$, together with the reference values from \cite{degrand1980numerical}, for spacing $a=0.25$.\medskip
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{rcccc}
+    \toprule
+    $f^2$ & $E_0^{\rm MC}$ & $E_0^{\rm ref}$ & $E_1^{\rm MC}$ & $E_1^{\rm ref}$ \\
+    \midrule
+    $-1.00$ & $2.499 \pm 0.001$ & $2.678$ & $6.021 \pm 0.001$ & $6.410$ \\
+    $\phantom{-}0.00$ & $0.961 \pm 0.001$ & $1.060$ & $3.556 \pm 0.001$ & $3.800$ \\
+    $\phantom{-}1.00$ & $1.031 \pm 0.001$ & $1.138$ & $2.532 \pm 0.001$ & $2.713$ \\
+    $\phantom{-}2.00$ & $1.957 \pm 0.003$ & $2.290$ & $2.377 \pm 0.003$ & $2.752$ \\
+    $\phantom{-}3.00$ & $2.555 \pm 0.005$ & $3.252$ & $2.679 \pm 0.005$ & $3.293$ \\
+    \bottomrule
+    \end{tabular}
+    \caption{Energy levels $E_0$ and $E_1$ of the anharmonic oscillator $V(x) = \lambda(x^2-f^2)^2$ ($\lambda = 1$, $m_0 = 1/2$, $\hbar = 1$) on the lattice $N=200$, $a = 0.25$. Reference values $E_i^{\rm ref}$: Table II of Blankenbecler-DeGrand-Sugar \cite{degrand1980numerical} (continuum). $E_0$ via virial theorem \ref{virialCR}; $E_1$ via pointwise estimator \ref{E1mE0} at $\tau \sim a$ (ground state dominant). Errors are the standard deviation of the mean between $n_r = 10$ independent measurements in a single chain with $n_{\rm meas} = 15\,000$.}
+    \label{tab:niveles}
+\end{table}
+
+
+The MC values reproduce the trend of the levels with respect to $f^2$, with a systematic downward deviation that grows with $f^2$ for $E_1$, most probably due to the finite lattice spacing.
+
+
+
+
+\section{Response to an external source and effective potential}
+
+If an external source $J$ is coupled to the system through the additional term $+J\sum_n x_n$ in the action, so that the new action is
+
+
+\begin{equation}
+    S' = S + J\sum_n x_n,
+\end{equation}
+
+
+the reflection symmetry $x \to -x$ is explicitly broken and a non-zero mean value $\braket{x}_J \neq 0$ appears. The function $\braket{x}_J$ as a function of $J$ is compared with theoretical results for the harmonic oscillator and the double well, and the renormalised effective potential $V_R(x)$ is obtained from the inverse function $J(\braket{x})$ by integrating \ref{VR}.
+
+
+
+\subsection{Harmonic oscillator}
+
+
+For the harmonic oscillator, the classical equations of motion with the source $+J\cdot x$ have the linear tendency $J = -\mu^2 x$. Figure \ref{Jarmonico} shows $J \in \{-1, -0.5, -0.25, 0, 0.25, 0.5, 1\}$ as a function of $\braket{x}_J$ for the harmonic oscillator. The line of slope $-\mu^2$ passes through all points within the statistical error.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{figs/fig_11_J_armonico.png}
+    \caption{Response of the harmonic oscillator to an external source $J$. Black points: Monte Carlo (error bars smaller than marker size). Red solid line: linear prediction $J = -\mu^2 \braket{x}$. Parameters: $V(x) = \frac{1}{2}\mu^2 x^2$ with $\mu^2 = 2$, $m_0 = 0.5$, $\hbar = 1$; lattice $N = 200$, $a = 0.25$. For each value of $J$, $n_r = 10$ independent chains with $n_{\rm therm} = 3\,000$, $n_{\rm meas} = 15\,000$, $n_{\rm skip} = 5$, $\Delta = 0.6$.}
+    \label{Jarmonico}
+\end{figure}
+
+
+\subsection{Anharmonic oscillator}
+
+
+In the case of the double well $V = \lambda(x^2 - f^2)^2$, the classical relation $J = -dV/dx = -4\lambda x(x^2 - f^2)$ is a cubic with three branches. The average curve $\braket{x}_J$ as a function of $J$ is, however, monotone and single-valued: quantum tunnelling smooths the transition. Figure \ref{Jdoblepozo} compares the simulation result with the classical curve.\medskip
+
+The Monte Carlo points follow the two outer branches of the classical cubic for large $|J|$ (\emph{classical regime}), since the corresponding well dominates exponentially. For moderate $|J|$ a systematic deviation from the classical curve appears. The classical intermediate branch (passing through the origin) is \emph{unstable} and therefore inaccessible, leaving a gap in the region $|\braket{x}|<x_c$: the quantum system cannot stabilise in the intermediate region ($|\langle x\rangle|< x_c$), a behaviour that classical theory incorrectly predicts as stable.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_12_J_doble_pozo.png}
+    \caption{Response of the double well to an external source $J$. Black points: Monte Carlo. Red solid line: classical prediction $J = -dV/dx = -4\lambda x(x^2 - f^2)$. Black dashed line: guide to MC points. Grey vertical lines: classical minima $\pm x_c = \pm\sqrt{2}$. Parameters: $V(x) = \lambda(x^2 - f^2)^2$ with $\lambda = 1$, $f^2 = 2$, $m_0 = 0.5$, $\hbar = 1$; lattice $N = 400$, spacing $a = 0.05$. For each $J$, averaged over $n_r = 10$ chains with $n_{\rm therm} = 3\,000$, $n_{\rm meas} = 15\,000$, $n_{\rm skip} = 5$, $\Delta = 0.6$.}
+    \label{Jdoblepozo}
+\end{figure}
+
+
+
+\newpage
+
+\subsection{Renormalised effective potential}
+
+
+Integrating $J(x_J)$ with respect to $x_J$ via $V_R'(x_J) = -J(x_J)$ yields the effective potential \ref{VR}. In particular, for the double well $V_R$ has a single minimum at $x_J = 0$, in contrast to the classical potential which has two degenerate minima at $\pm x_c$.
+
+Figure \ref{VRarmonico} shows the effective potential $V_R(x_J)$ obtained by simulation for the harmonic oscillator together with the superimposed classical curve. The agreement is perfect: the classical potential is quadratic and the effective potential coincides with it exactly.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_13_VR_armonico.png}
+    \caption{Renormalised effective potential $V_R(x_J)$ of the harmonic oscillator. Black points: trapezoidal integration of the Monte Carlo data from figure \ref{Jarmonico} with $V_R(x_J) = -\int_{0}^{x_J} J(x')\, dx'$. Red solid line: theoretical quadratic form $V_R = \frac12 \mu^2 x^2 = x^2$. Parameters: $V(x) = \frac{1}{2}\mu^2 x^2$ with $\mu^2 = 2$, $m_0 = 0.5$, $\hbar = 1$, lattice $N=200$, spacing $a = 0.25$.}
+    \label{VRarmonico}
+\end{figure}
+
+For the double well, however, the simulation result differs from the classical potential: the quantum effective potential $V_R$ is convex (single minimum) as opposed to the classical double well (two degenerate minima). Figure \ref{VRdoble} shows the simulated $V_R(x_J)$ with the classical curve $\lambda(x^2 - f^2)^2$ superimposed.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_14_VR_doble_pozo.png}
+    \caption{Renormalised effective potential $V_R(x_J)$ of the double well. Connected black points: trapezoidal integration of the Monte Carlo data from figure \ref{Jdoblepozo} with $V_R(x_J) = -\int J(x')\,dx'$. Red dashed line: classical potential $V_{\rm clas}(x) = \lambda(x^2 - f^2)^2 - \lambda f^4$. Grey vertical lines: $\pm x_c = \pm\sqrt{2}$. Parameters: $\lambda = 1$, $f^2 = 2$, $m_0 = 0.5$, $\hbar = 1$, lattice $N=200$, spacing $a = 0.1$.}
+    \label{VRdoble}
+\end{figure}
+
+
+\section{Double well: instantons and quantum tunnelling}
+\label{secdoblepozo}
+
+
+Instantons are finite Euclidean-time classical configurations that locally minimise $S_E$ and connect the two minima of the potential. For the double well $V = \lambda(x^2 - f^2)^2$ the Euclidean equation of motion is
+
+\begin{equation}
+    m_0 \frac{d^2 x}{d\tau^2} = \frac{dV}{dx} = 4\lambda x(x^2 - f^2),
+    \label{eulerlagrange}
+\end{equation}
+
+whose kink (instanton) and antikink (anti-instanton) solution is
+
+\begin{equation}
+    x_{\pm}(\tau) = \pm x_c \tanh\!\left( \sqrt{\frac{2\lambda}{m_0}}\, x_c\, (\tau - \tau_0) \right),
+    \label{kinkclasico}
+\end{equation}
+
+with $x_c = \sqrt{f^2}$ and $\tau_0$ a collective coordinate (the temporal position of the kink centre). The action of an isolated kink is
+
+\begin{equation}
+    S_{\rm inst} = \frac{2\sqrt{2}}{3}\sqrt{\lambda m_0}\, x_c^3 = \frac{2\sqrt{2}}{3}\sqrt{\lambda m_0}\, f^3,
+\end{equation}
+
+so that the contribution to the tunnelling amplitude between wells is $\sim e^{-S_{\rm inst}}$, growing with $f^3$ and reproducing the exponential behaviour noted in the previous section.
+
+
+
+\subsection{A single kink}
+
+
+To force the appearance of an odd number of kinks, antiperiodic boundary conditions $x_N = -x_0$ are imposed instead of periodic ones. The topological parity of the field forces at least one crossing between the two wells. Figure \ref{kinkfig} shows a thermalised lattice configuration with these conditions.\medskip
+
+
+
+The Monte Carlo configuration follows the trend of the classical solution \ref{kinkclasico} except for statistical fluctuations, which would vanish with a large number of realisations. A well of depth $f^2=4$ is used; the statistical fluctuations are seen to be contained between the classical turning points $\pm x_1$ and $\pm x_2$, and a step-like transition is visible. The characteristic kink width is $\sqrt{m_0/(2\lambda f^2)} = 0.25$ and the transition between $-x_c$ and $+x_c$ occurs approximately at the lattice centre, $\tau_0 = T/2 = 25$, in very good agreement with the classical solution superimposed in figure \ref{kinkfig}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_15_kink_simple.png}
+    \caption{Thermalised lattice configuration with antiperiodic boundary conditions ($x_N = -x_0$) for the double well $V(x) = \lambda(x^2-f^2)^2$ with $\lambda = 1$, $f^2 = 4$ (classical minima at $\pm x_c = \pm 2$, grey dashed lines). Blue and green dashed lines indicate the classical turning points $\pm x_1 = \pm\sqrt{f^2(1-1/\sqrt{2})}\approx \pm 1.08$ and $\pm x_2 = \pm\sqrt{f^2(1+1/\sqrt{2})}\approx \pm 2.61$; statistical fluctuations are confined between them. The classical instanton solution $x(\tau) = x_c\tanh\!\bigl[\sqrt{2\lambda/m_0}\,x_c(\tau-\tau_0)\bigr]$ centred at $\tau_0 = T/2$ is superimposed in red. The lower $X$ axis shows the lattice site index $n$ and the upper $X$ axis the Euclidean time $\tau = n\,a$; the left $Y$ axis corresponds to the MC configuration $x_n$ and the right $Y$ axis to the classical solution $x(\tau)$, both on the same scale. Parameters: $m_0 = 0.5$, $\hbar = 1$, lattice $N_{\rm KINK} = 200$ sites, spacing $a = 0.25$, $\Delta = 0.5$; step initialisation $x_n = -x_c$ for $n < N/2$ and $x_n = +x_c$ for $n \ge N/2$, followed by $200$ thermalisation iterations.}
+    \label{kinkfig}
+\end{figure}
+
+
+
+\subsection{Annihilation of a kink--antikink pair}
+
+
+Kinks are topological objects: on a lattice with boundary conditions fixed to $+x_c$ at both ends, the total number of kinks minus the number of antikinks must be zero, although configurations with kink--antikink pairs $(k, \bar k)$ that mutually annihilate can exist. Initialising the lattice with a kink followed by an antikink and letting the system evolve, the pair approaches through attractive interaction and eventually annihilates after a finite number of sweeps.\medskip
+
+
+Figure \ref{aniquilacionfig} shows this process: the kink--antikink pair annihilates around iteration $\sim 150$, after which the lattice is dominated by the $+x_c$ well with only statistical fluctuations around this value.
+
+The simulation naturally recovers the topological effects expected from instantons. The Monte Carlo method correctly predicts the theoretical behaviour, since the sum over all configurations automatically includes all topologically weighted behaviours.\medskip
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_17_aniquilacion_kinks.png}
+    \caption{Monte Carlo evolution of a kink--antikink pair on a lattice of $N_{\rm ANIQUI} = 80$ sites with fixed boundary conditions $x_0 = x_{N-1} = +x_c$ (both ends at the same well). Parameters: $V(x) = \lambda(x^2-f^2)^2$ with $\lambda = 1$, $f^2 = 2$, $m_0 = 0.5$, $a = 0.25$, $\Delta = 0.5$, $\hbar = 1$. Initialisation: $x_n = +x_c$ except $x_n = -x_c$ for $n\in[38,42]$ (centred kink--antikink pair, separated by $4$ sites). Each line is a configuration after $15$ iterations; vertical axis evolves from $0$ to $300$.}
+    \label{aniquilacionfig}
+\end{figure}
+
+
+
+\section{Conclusions}
+
+
+We have reproduced the numerical method described by Creutz and Freedman \cite{creutz1981statistical} to evaluate the Euclidean path integral in one-dimensional quantum mechanics using the $M(RT)^2$ algorithm. The formal equivalence between the imaginary-time path integral and the partition function of a classical statistical system reduces a quantum problem to a sampling problem: the density of lattice configurations in equilibrium is $|\psi_0(x)|^2$, and quantum mechanical expectation values are obtained as statistical averages.
+
+The method has been validated on the harmonic oscillator, where both the ground-state wave function and its energy $E_0 = 0.4849 \pm 0.0005$ have been recovered with deviations below $3\%$ from the analytical values. The small discrepancies are due to the finite spacing $a$ and can be corrected by taking the limit $a \to 0$ with $T = Na$ fixed.
+
+In the anharmonic oscillator the simulation describes the crossover between the single-well and double-well regimes as $f^2 = -\mu^2/(2\lambda)$ is varied. The energy $E_0$ decreases monotonically with $f^2$ and the excited levels, although noisier, show physically correct behaviour. For the simulated parameters ($|\mu^2| \le 3$, $\lambda = 1$) the barrier is comparable to the zero-point energy and the distribution $|\psi_0(x)|^2$ remains essentially unimodal.
+
+Furthermore, coupling to an external source $J$ has allowed the renormalised effective potential $V_R(x_J)$ to be constructed. The result for the double well is that $V_R$ has a single minimum at $x_J = 0$, in contrast to the two minima of the classical potential.
+
+Finally, the study of the double well with $V = \lambda(x^2-f^2)^2$ and antiperiodic boundary conditions has revealed the natural presence of kink-type configurations. The annihilation process of a kink--antikink pair is reproduced automatically as part of the Monte Carlo dynamics, showing how the path integral includes all topological behaviours weighted by their action.
+
+
+The comparison with the reference values of Blankenbecler, DeGrand and Sugar \cite{degrand1980numerical}, obtained by an independent method based on moment recursion, confirms the accuracy of the Monte Carlo method. In the single-well regime and at moderate barrier height, agreement in $E_0$ is below $3\%$ and rises to $\sim 8.5\%$ for deeper wells ($f^2 = 5$), a deviation due to the finite lattice spacing $a$.
+
+
+
+\newpage
+
+
+\bibliographystyle{plain}
+\bibliography{bibliografia}
+
+
+
+
+\end{document}

@@ -1,0 +1,749 @@
+\documentclass[11pt,a4paper,twoside,pdf]{article}
+
+% Codificación y tipografía
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathpazo}
+\usepackage{braket}
+
+% Matemáticas
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{bm}
+\usepackage[mathscr]{euscript}
+
+% Figuras
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+
+% Tablas y utilidades
+\usepackage{multirow}
+\usepackage{rotating}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{xspace}
+
+% Símbolos adicionales
+\usepackage{eurosym}
+\usepackage{bbding}
+\usepackage{pifont}
+
+% Otros
+\usepackage{soul}
+\usepackage{color}
+\usepackage{latexsym}
+\usepackage{xtab}
+
+% Hipervínculos
+\usepackage[colorlinks=true,urlcolor=blue,linkcolor=blue,citecolor=blue]{hyperref}
+
+% Numeración de ecuaciones
+\numberwithin{equation}{section}
+
+% Márgenes
+\usepackage[top=2.88cm,bottom=2.97cm,left=2.95cm,right=2.95cm]{geometry}
+
+% Idioma
+\usepackage[spanish,es-nodecimaldot,es-tabla,es-lcroman,es-nosectiondot,es-noindentfirst]{babel}
+
+% Cabeceras
+\usepackage{fancyhdr}
+\setlength{\headheight}{13.6pt}   % evita warning de fancyhdr
+
+% Teoremas
+\newtheorem{theorem}{Teorema}[section]
+\newtheorem{corollary}{Corolario}[theorem]
+\newtheorem{lemma}[theorem]{Lema}
+
+% Comandos propios
+\newcommand{\dis}{\displaystyle}
+
+\linespread{1.05}
+
+% ── Reducir espacios en blanco alrededor de ecuaciones y flotantes ──
+\setlength{\abovedisplayskip}{5pt plus 2pt minus 2pt}
+\setlength{\belowdisplayskip}{5pt plus 2pt minus 2pt}
+\setlength{\abovedisplayshortskip}{2pt plus 2pt}
+\setlength{\belowdisplayshortskip}{4pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{8pt plus 2pt minus 4pt}
+\setlength{\intextsep}{5pt plus 2pt minus 2pt}
+
+\begin{document}
+
+% Evita que LaTeX estire los párrafos para llenar la página
+% (con twoside se activa \flushbottom por defecto)
+\raggedbottom
+
+% Portada %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\pagestyle{empty}
+
+\noindent
+\begin{tabular}{r}
+\includegraphics[width=8.8cm]{escudoUGRmonocromo.png} \\[-1.8ex]
+\hspace{31mm}\vspace{-8mm}
+\begin{tabular}{c}
+\hline\\[-1ex]\hskip-2mm
+{\bf Escuela Internacional}\vspace{1mm}\\
+{\bf de Postgrado}\hspace{18mm}
+\end{tabular}
+\end{tabular}
+
+\large
+\vspace{10mm}
+\hspace{25mm}
+\begin{tabular}{l}
+MÁSTER EN FÍSICA Y MATEMÁTICAS - FISYMAT
+\end{tabular}
+
+
+\vspace{5mm}
+\hspace{25mm}
+\begin{tabular}{l}
+MÉTODOS COMPUTACIONALES \\
+EN FÍSICA NO LINEAL
+\\[1.5ex]
+\LARGE\bf MECÁNICA CUÁNTICA \\
+\LARGE\bf ESTADÍSTICA
+\end{tabular}
+
+\vspace{5mm}
+
+\hspace{2mm}
+\begin{tabular}{l}
+Por:
+\\
+{\bf Ali-Salem Amari }\\
+\end{tabular}
+
+\vspace{5mm}
+
+\begin{abstract}
+\normalsize
+
+Se reproducen los resultados del trabajo de Creutz y Freedman \cite{creutz1981statistical}, donde se aplica el método de Monte Carlo a la integral de caminos en tiempo euclídeo para estudiar problemas de mecánica cuántica unidimensional. Tras una rotación de Wick, el peso oscilatorio $e^{iS/\hbar}$ de la formulación de Feynman se convierte en un peso real positivo $e^{-S_E/\hbar}$ formalmente idéntico a la distribución de Boltzmann de un sistema estadístico clásico, lo que permite muestrear configuraciones de caminos mediante el algoritmo $M(RT)^2$ o de Metropolis. Se analiza el oscilador armónico (validación del método), el oscilador anarmónico, el doble pozo y su contenido en instantones, así como la respuesta del sistema a una fuente externa y la construcción del potencial efectivo renormalizado. Las simulaciones se realizan sobre una red temporal de $N=200, 400$ puntos con condiciones de contorno periódicas, o antiperiódicas en el caso de $kinks$.
+
+\end{abstract}
+
+
+\vspace{1mm}
+
+% Indice %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TOC compacto en la portada: tamaño scriptsize, espaciado mínimo entre líneas
+
+\newpage
+\tableofcontents
+
+
+% Texto %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\pagestyle{fancy}
+\fancyhead[RO,LE]{\leftmark}
+\fancyhead[LO,RE]{\thepage}
+\fancyfoot{}
+
+
+\newpage
+
+
+\section{Introducción}
+
+El propagador
+
+\begin{equation}
+    K(x_b, t_b; x_a, t_a) = \braket{x_b | \hat{U}(t_b, t_a) | x_a},
+    \label{Kdef}
+\end{equation}
+
+donde $\hat{U}(t_b, t_a) = e^{-i\hat{H}(t_b - t_a)/\hbar}$ es el operador de evolución temporal, es la piedra angular de la dinámica del sistema y permite obtener la función de onda en $x_b$ a tiempo $t_b$ $propagando$ la función de onda $\Psi$ en $x_a$ a tiempo $t_a$
+
+
+
+\begin{equation}
+    \Psi(x_b, t_b) = \int K(x_b, t_b; x_a, t_a) \Psi(x_a, t_a) \, dx_a.
+\end{equation}
+
+
+En la formulación de integral de caminos de Feynman la amplitud de probabilidad de encontrar la partícula en $x_b$ a tiempo $t_b$ habiendo estado en $x_a$ a tiempo $t_a$ se evalúa como una suma sobre todos los $caminos$ posibles que conectan ambos puntos espacio--temporales \cite{feynman2010quantum}
+
+\begin{equation}
+    K(x_b, t_b; x_a, t_a) = \int  e^{i S[x(t)]/\hbar} \,\mathcal{D} x(t),
+    \label{pathint}
+\end{equation}
+
+donde $S[x(t)] = \int_{t_a}^{t_b} L(\dot{x}, x; t) \, dt$ es la acción clásica del camino. La medida funcional $\mathcal{D}x(t)$ indica integración sobre todas las trayectorias tales que $x(t_a) = x_a$ y $x(t_b) = x_b$, aunque esta es formal y no tiene una definición rigurosa como medida en el espacio de funciones adquiere sentido tras una discretización temporal y una rotación de Wick a tiempo imaginario \cite{galindo1990quantum}. \medskip
+
+
+
+
+
+
+
+
+\subsection{Rotación a tiempo euclídeo}
+\label{Wick}
+
+
+El argumento de la integral de caminos en tiempo real es una fase muy oscilante, lo que imposibilita una evaluación numérica directa: la cancelación entre fases positivas y negativas hace que un método de muestreo aleatorio no converja. La solución, debida a Kac \cite{galindo1990quantum}, consiste en realizar la sustitución
+
+\begin{equation}
+    t \;\to\; -i\tau, \qquad \tau \in \mathbb{R}^+,
+    \label{wick}
+\end{equation}
+
+de forma que la acción $S[x(t)]$ se transforma en la acción euclídea
+
+\begin{equation}
+    S_E[x(\tau)] = \int_0^{T} \left[ \frac{m}{2} \left( \frac{dx}{d\tau} \right)^2 + V(x) \right] \, d\tau,
+    \label{Seuclid}
+\end{equation}
+
+con $T = -i(t_b - t_a)$. La integral de caminos euclídea
+
+\begin{equation}
+    Z(x_b, T; x_a, 0) = \int e^{-S_E[x(\tau)]/\hbar} \mathcal{D} x(\tau) \,
+    \label{Zeuclid}
+\end{equation}
+
+toma ahora un argumento \textit{real y positivo}, formalmente idéntico a la función de partición canónica de la física estadística con energía $S_E$. Los caminos $x(\tau)$ pasan a interpretarse como $configuraciones$ de un sistema estadístico y $\hbar$ desempeña el papel de una temperatura efectiva que controla la magnitud de las fluctuaciones.
+
+
+
+\subsection{Discretización en la red}
+\label{red}
+
+
+Para una evaluación numérica, se sustituye el tiempo continuo por una red de $N$ puntos equiespaciados $\varepsilon$ tales que $t_{n+1} - t_n = \varepsilon$. Adoptando la notación $x(t_n) = x_n$, una configuración del sistema queda determinada por el conjunto de puntos $\{x_1, x_2, \ldots, x_N\}$. La derivada temporal de la velocidad se reemplaza por su versión discreta en diferencias finitas, y la acción \ref{Seuclid} adopta la forma discreta
+
+\begin{equation}
+    S_E^{\rm latt} = \sum_{n=1}^{N} \left[ \frac{m_0}{2} \!\left( \frac{x_{n+1} - x_n}{a} \right)^2 + V(x_n) \right] a,
+    \label{Slatt}
+\end{equation}
+
+con $m_0$ la masa en unidades de la red y $a=i\varepsilon$. El propagador completo se expresa como
+
+\begin{equation}
+    Z = \int_{-\infty}^{+\infty} e^{-S_E^{\rm latt}/\hbar} dx_{ {1, 2, \ldots, N-1} },
+\end{equation}
+
+donde se ha usado la notación $\prod_{n=1}^{N-1} dx_n \equiv dx_{1, 2, \ldots, N-1}$ y la integral se extiende sobre todas las configuraciones que cumplan  las condiciones $x_0 = x_{a}$ y $x_N = x_b$. 
+
+El valor medio de un observable $\hat{O}(\mathbf{x})$ se obtiene como una media sobre dicha distribución de probabilidad
+
+\begin{equation}
+    \braket{\hat{O}} = \frac{1}{Z} \int_{-\infty}^{+\infty} \hat{O}(\mathbf{x})\, e^{-S_E^{\rm latt}/\hbar} dx_{1, 2, \ldots, N-1},
+    \label{esperanza}
+\end{equation}
+
+donde $\mathbf{x} \equiv \{x_1, x_2, \ldots, x_N\}$ denota una configuración completa de la red.
+
+
+
+
+
+\subsection{Algoritmo $M(RT)^2$ o de Metropolis}
+\label{metropolis}
+
+
+El observable \ref{esperanza} es una integral en $N$ dimensiones, con $N = 200, 400$ en este trabajo. Un método determinista escalaría como $\sim M^N$ con $M$ el número de puntos evaluados por dimensión, lo cual es imposible de computar mediante métodos deterministas. Además, el peso $e^{-S_E/\hbar}$ está concentrado en una región exponencialmente pequeña del espacio de configuraciones, lo que hace que la mayoría de los $caminos$ posibles contribuyan de forma despreciable a la integral, por lo que un muestreo uniforme tipo aceptación/rechazo sería ineficiente. \medskip
+
+
+La idea de los métodos Monte Carlo es estimar \ref{esperanza} como un promedio estadístico sobre $M$ configuraciones $\{\mathbf{x}^{(m)}\}_{m=1}^{M}$ distribuidas \emph{según la distribución de Boltzmann} $p(\mathbf{x}) = e^{-S_E^{\rm latt}/\hbar}/Z$, de forma que el valor medio del observable se estima evaluándolo en estas configuraciones y promediando sobre ellas:
+
+\begin{equation}
+    \braket{\hat{O}} \;\approx\; \frac{1}{M}\sum_{m=1}^{M} \hat{O}\!\left(\mathbf{x}^{(m)}\right),
+    \label{MCestimator}
+\end{equation}
+
+con un error estadístico que decrece como $1/\sqrt{M}$ \emph{independientemente de la dimensión} \cite{kalos2008monte}. El problema ahora es generar configuraciones $\mathbf{x}^{(m)}$ distribuidas según $p(\mathbf{x})$, donde además $Z$ es desconocida.\bigskip
+
+
+El algoritmo $M(RT)^2$ o de Metropolis \footnote{La denominación $M(RT)^2$ del famoso algoritmo Metrópolis se debe a que esta incluye a los matrimonios Rosenbluth y Teller que se cree que idearon el método original, mientras que Metrópilis solo puso a disposición del estudio el poder computacional \cite{kalos2008monte}.} \cite{metropolis1953equation} permite muestrear configuraciones distribuidas según $p(\mathbf{x})$ construyendo una cadena de Markov $\mathbf{x}^{(0)}\to \mathbf{x}^{(1)}\to \mathbf{x}^{(2)}\to\cdots$ cuya distribución estacionaria coincide con $p(\mathbf{x})$ sin necesidad de conocer la constante de normalización $Z$. La regla de aceptación sólo depende del cociente $p(\mathbf{x}')/p(\mathbf{x}) = e^{-\Delta S/\hbar}$, y bajo las condiciones de balance detallado y ergodicidad, la cadena visita cada configuración con frecuencia asintótica $p(\mathbf{x})$ y la estimación \ref{MCestimator} converge al valor exacto en el límite $M \to \infty$.\medskip
+
+
+El algoritmo $M(RT)^2$ para actualizar una configuración $\mathbf{x} = \{x_1, \ldots, x_N\}$ se basa en propuestas de cambios en un punto de la red $n$ elegido aleatoriamente, que se aceptan o rechazan según la variación local de la acción $\Delta S$:
+
+\begin{itemize}
+    \item Propuesta: desplazar $x_n \to x_n' = x_n + u\cdot \Delta$, con $u \sim \mathcal{U}(-1, 1)$ (uniforme entre $-1$ y $1$), y $\Delta$ un parámetro fijo.
+
+    \item Variación local de la acción:
+
+    \begin{equation}
+    \begin{split}
+        \Delta S &= \frac{m_0}{2a} \left[ (x_n' - x_{n-1})^2 + (x_{n+1} - x_n')^2 - (x_n - x_{n-1})^2 - (x_{n+1} - x_n)^2 \right] \\
+                 &\quad + a \left[ V(x_n') - V(x_n) \right].
+    \end{split}
+    \label{deltaS}
+    \end{equation}
+
+    \item Aceptación: el cambio se acepta con probabilidad $\min(1,\, e^{-\Delta S/\hbar})$.
+\end{itemize}
+
+
+El carácter local de $\Delta S$ hace que solo dependa únicamente de los vecinos $x_{n\pm 1}$, así que cada paso tiene coste $\mathcal{O}(1)$ y un barrido completo $\mathcal{O}(N)$. El parámetro $\Delta$ se ajusta para mantener una tasa de aceptación próxima al $70\%$. \medskip
+
+
+Aunque la cadena de Markov converge a la distribución de Boltzmann, las configuraciones consecutivas están correlacionadas ya que difieren a lo sumo en $N$ puntos, lo que reduce la eficiencia estadística. Por ello, entre medidas se realizan $n_{\rm skip}$ barridos de descorrelación, y antes de empezar a medir se descartan $n_{\rm therm}$ barridos de termalización que eliminan la dependencia con la configuración inicial. La incertidumbre estadística se estima ejecutando $n_r$ cadenas independientes en paralelo (realizaciones), promediando los $\braket{\hat{O}}_{r}$ de cada cadena y tomando como error la desviación estándar de la media entre cadenas, $\sigma_{\braket{\hat{O}}} = \sigma_{\hat{O}}/\sqrt{n_r}$. 
+
+Una alternativa más eficiente computacionalmente es dividir una sola cadena en $n_r$ bloques, promediando cada bloque para obtener $n_r$ estimaciones independientes del observable, y tomando la desviación estándar de la media entre bloques como error estadístico. Este método es equivalente a ejecutar $n_r$ cadenas independientes con $n_{\rm meas}/n_r$ medidas cada una, pero evita el cuello de botella de inicializar múltiples cadenas, ya que el algoritmo $M(RT)^2$ asegura que la cadena de Markov converge a la distribución deseada, por lo que el bloque de medidas es representativo de la distribución estacionaria. En cada caso el método usado para estimar el error se especifica en la sección correspondiente.
+
+
+
+\subsection{Observables}
+\label{obs}
+
+La energía del estado fundamental se obtiene a partir del teorema del virial \cite{creutz1981statistical}, que para un potencial del tipo $V(x) = \frac12 \mu^2 x^2 + \lambda x^4$ toma la forma
+
+\begin{equation}
+    E_0 = \mu^2 \braket{x^2} + 3\lambda \braket{x^4}.
+    \label{virial}
+\end{equation}
+
+\medskip
+
+El primer estado excitado se extrae de la función de correlación de dos puntos
+
+\begin{equation}
+    G(\tau) = \braket{x(0)\, x(\tau)}
+\end{equation}
+
+que en una red de tamaño finito $T = Na$ y con $T \gg 1/(E_1 - E_0)$ tiende a\footnote{A partir de ahora se trabaja en unidades $\hbar = 1$.} 
+
+\begin{equation}
+    G(\tau) \sim |\!\braket{0|\hat{x}|1}\!|^2 \, e^{-(E_1 - E_0)\tau},
+\end{equation}
+
+de manera que el cociente entre valores consecutivos proporciona una estimación de la diferencia $E_1 - E_0$
+
+\begin{equation}
+    E_1 - E_0 \;\approx\; \frac{1}{a}\ln \frac{G(\tau)}{G(\tau + a)}.
+    \label{E1mE0}
+\end{equation}
+
+El estimador se evalúa en un valor de $\tau$ no muy pequeño (para que el estado fundamental ya domine la suma espectral) ni muy grande (para que $G(\tau)$ aún destaque sobre el ruido estadístico).
+
+
+Finalmente, acoplando una fuente externa $J$ al sistema $S_E \to S_E + J \sum_n x_n$ e integrando se obtiene el potencial efectivo renormalizado \cite{creutz1981statistical}
+
+\begin{equation}
+    V_R(x_J) = -\int_{x_{J,0}}^{x_J} J(x') \, dx',
+    \label{VR}
+\end{equation}
+
+que muestra la dinámica de baja energía y posee, por construcción, las mismas simetrías que el Hamiltoniano original.
+
+
+
+\subsection{Detalles de la simulación}
+\label{params}
+
+En todas las simulaciones presentadas se ha empleado una red temporal de $N = 200, 400$ puntos con condiciones de contorno periódicas o antiperiódicas y espaciado $a \in [0.5, 0.05]$ en unidades naturales. La masa se fija en $m_0 = 1, 0.5$ y los parámetros de la cadena de Markov son
+
+\begin{equation*}
+    n_{\rm therm} = 1000 \,\text{--} \, 3000 \qquad n_{\rm meas} = 3000 \, \text{--} \, 30000 \qquad n_{\rm skip} = 5 \qquad n_r =  10 \, \text{--} \, 100
+\end{equation*}
+
+
+con un paso de propuesta $\Delta$ ajustado en cada simulación para obtener una tasa de aceptación en el rango $60\%$--$70\%$. Las medidas se realizan tras $n_{\rm therm}$ propuestas de termalización, y los errores que se presentan corresponden a la desviación estándar de la media entre las $n_r$ cadenas o muestreos en una misma cadena independientes, especificadas en cada sección.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Oscilador armónico}
+
+Como validación del método se considera el oscilador armónico unidimensional cuyo potencial
+
+\begin{equation}
+    V(x) = \frac{1}{2} \mu^2 x^2
+\end{equation}
+
+tiene solución exacta en función de los polinomios de Hermite. Los valores teóricos a comparar con la simulación, en dimensiones ($\hbar = m_0 = 1$, $\mu = \omega$), son
+
+\begin{equation}
+    E_0 = \frac{\mu}{2}, \quad E_1 - E_0 = \mu, \quad |\psi_0(x)|^2 = \sqrt{\frac{\mu}{\pi}}\, e^{-\mu x^2}
+    \notag
+\end{equation}
+
+\begin{equation}
+    \braket{x^2} = \frac{1}{2\mu}, \quad \braket{x^4} = \frac{3}{4\mu^2}.
+    \nonumber
+\end{equation}
+
+con $\mu^2 = 1$.
+
+
+
+\subsection{Estado fundamental y primer estado excitado}
+
+En la figura \ref{caminosarmonico} se muestra la evolución de un camino típico durante las primeras iteraciones de la simulación, partiendo de una configuración aleatoria distribuida uniformemente en $(-1, 1)$. La amplitud de las fluctuaciones se va estabilizando en torno a la escala $1/\sqrt{2\mu}$ del estado base. Pasada la termalización, el sistema visita el espacio de configuraciones con una probabilidad proporcional a $|\psi_0(x)|^2$.\medskip
+
+
+
+El histograma normalizado de las posiciones visitadas reproduce con precisión la distribución teórica $|\psi_0(x)|^2$ del estado base, como se muestra en la figura \ref{psi0armonico}. La concordancia es uniforme sobre todo el rango de $x$. En la tabla \ref{tab:armonico} se muestran los valores numéricos de los principales observables comparados con sus valores exactos. La energía del estado base estimada por el teorema del virial es
+
+\begin{equation*}
+    E_0 = 0.4849 \pm 0.0005,
+\end{equation*}
+
+con una desviación del $3\%$ respecto al valor analítico $E_0 = \mu/2 = 0.5$. Las pequeñas discrepancias se deben a errores sistemáticos por la discretización temporal y al error estadístico de la simulación, que se estima en $0.0005$ a partir de la desviación estándar entre 10 cadenas independientes. Para $\braket{x^4}$ se obtiene $0.7058 \pm 0.0013$, con una desviación del $6\%$ respecto al valor teórico $0.75$. En ambos casos, el error estadístico es pequeño pero no suficiente para explicar completamente las diferencia, lo que sugiere que la discretización es la principal fuente de error sistemático en la simulación.
+
+
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_01_caminos_armonico.png}
+    \caption{Cinco caminos de la cadena de Markov para el oscilador armónico, tomadas en las iteraciones $\{0, 50, 200, 1000, 5000\}$. Parámetros: $V(x)=\frac{1}{2}\mu^2 x^2$ con $\mu^2 = 1$, masa $m_0 = 1$ y $\hbar = 1$; red de $N=200$ puntos temporales con espaciado $a = 0.5$ y condiciones de contorno periódicas; salto de $M(RT)^2$ $\Delta = 0.8$. Inicialización aleatoria uniforme $x_n \in (-1, 1)$. La configuración se estabiliza tras $\sim 200$--$1000$ iteraciones, alcanzando la distribución estacionaria del estado base.}
+    \label{caminosarmonico}
+\end{figure}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_05_psi0_armonico.png}
+    \caption{Función de onda del estado fundamental $|\psi_0(x)|^2$ del oscilador armónico. Histograma normalizado de las posiciones visitadas por la cadena de Markov (barras azules, 80 en $x \in [-3.5, 3.5]$) comparado con la predicción analítica $|\psi_0(x)|^2 = \sqrt{\mu/\pi}\,e^{-\mu x^2}$ (línea roja). Parámetros: $V(x)=\frac{1}{2}\mu^2 x^2$ con $\mu^2 = 1$, $m_0 = 1$, $\hbar = 1$; red $N=200$, $a = 0.5$ (longitud física $T = Na = 100$). Se promedió sobre $n_r = 10$ cadenas independientes con $n_{\rm therm} = 1500$ barridos de termalización, $n_{\rm meas} = 8\,000$ medidas y $n_{\rm skip} = 5$ barridos de descorrelación entre medidas (tasa de aceptación: $68.0\%$).}
+    \label{psi0armonico}
+\end{figure}
+
+\medskip
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcc}
+    \toprule
+    Observable & Monte Carlo & Teórico \\
+    \midrule
+    $\braket{x^2}$       & $0.4849 \pm 0.0005$ & $0.5000$ \\
+    $\braket{x^4}$       & $0.7058 \pm 0.0013$ & $0.7500$ \\
+    $E_0$ (virial)        & $0.4849 \pm 0.0005$ & $0.5000$ \\
+    \bottomrule
+    \end{tabular}
+    \caption{Observables del oscilador armónico ($V = \frac{1}{2}\mu^2 x^2$ con $\mu^2 = 1$, $m_0 = 1$, $\hbar = 1$) simulados en una red de $N = 200$ puntos con $a = 0.5$ y los valores analíticos. Los errores corresponden a la desviación estándar de la media entre $n_r = 10$ cadenas independientes, cada una con $n_{\rm meas} = 8\,000$ medidas tomadas tras $n_{\rm therm} = 1\,500$ barridos de termalización y $n_{\rm skip} = 5$ barridos de descorrelación entre medidas.}
+    \label{tab:armonico}
+\end{table}
+
+
+
+La función de correlación de dos puntos $G(\tau)$ se muestra en la figura \ref{correladorarmonico}, donde se observa un muy buen acuerdo con la curva teórica. Además, se muestra la masa efectiva $E_{\rm eff}$, definida como la diferencia entre niveles $E_1 - E_0$ estimada a partir del cociente puntual \ref{E1mE0}. La concordancia con la curva teórica es buena, aunque el ruido estadístico hace que el cociente puntual no sea un buen estimador a tiempos grandes. Un mayor número de realizaciones $n_r$ y de medidas $n_{\rm meas}$ reduciría el error estadístico y mejoraría la concordancia.
+
+
+
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_03_correlador_armonico.png}
+    \caption{(Izquierda) Función de correlación de dos puntos $G(\tau) = \langle x(0)x(\tau)\rangle$ del oscilador armónico; puntos: simulación Monte Carlo, línea roja: expresión analítica $G(\tau) = \cosh[\mu(T/2-\tau)]/\sinh(\mu T/2) / 2\mu$ con $T = Na = 100$. (Derecha) Masa efectiva $E_{\rm eff}(\tau) = \ln[G(\tau)/G(\tau+a)]/a$. Línea roja: \emph{efectiva teórica} derivada del cosh $E_{\rm eff}^{\rm th}(\tau) = \ln\{\cosh[\mu(T/2-\tau)]/\cosh[\mu(T/2-\tau-a)]\}/a$. Línea de puntos gris: $\mu$. Parámetros: $\mu^2 = 1$, $m_0 = 1$, $N = 200$, $a = 0.5$, $\hbar = 1$. Promedio sobre $n_r = 10$ cadenas independientes, $n_{\rm meas} = 30\,000$ medidas para la función correlación, $n_{\rm therm} = 1500$, $n_{\rm skip} = 5$.}
+    \label{correladorarmonico}
+\end{figure}
+
+
+
+
+
+\section{Oscilador anarmónico}
+
+
+Se considera el potencial anarmónico 
+
+\begin{equation}
+    V(x) = \lambda(x^2 - f^2)^2,
+    \label{Vanarm}
+\end{equation}
+
+con $\lambda > 0$ y $f^2 \in \mathbb{R}$ un parámetro que controla la forma del potencial: para $f^2 > 0$, $V(x)$ es un doble pozo con dos mínimos clásicos degenerados en $x = \pm x_c$ con $x_c = \sqrt{f^2}$, separados por una barrera de altura $V(0) - V(\pm x_c) = \lambda f^4$, para $f^2 \le 0$, $V(x) = \lambda(x^2 + |f^2|)^2$ es un pozo único centrado en el origen. La transición ocurre en $f^2 = 0$. \medskip
+
+
+
+A diferencia del oscilador armónico, no existe solución analítica cerrada para los niveles de energía, aunque sí existen valores de referencia precisos\cite{degrand1980numerical}.
+
+
+
+\subsection{Función de onda del estado fundamental}
+
+
+En la figura \ref{psianarmonico} se muestra $|\psi_0(x)|^2$ para cuatro casos. Los tres primeros usan la forma equivalente del potencial $V = \tfrac{1}{2}\mu^2 x^2 + \lambda x^4$ (con $m_0 = 1$, $a = 0.5$) que muestra la transición entre regímenes al variar $\mu^2$ de positivo a negativo. El cuarto muestra la densidad de probabilidad para con $V = \lambda(x^2-f^2)^2$, $f^2 = 2$ y $m_0 = 0.5$.
+
+
+En los tres primeros paneles se observa que el módulo cuadrado de la función de onda tiene una forma aproximadamente gaussiana, con los picos achatados y que tienden a ensancharse a medida que la barrera central se hace más pronunciada, pero sin mostrar una doble estructura claramente definida. En el cuarto panel la densidad de probabilidad muestra dos picos bien definidos en $\pm x_c = \pm\sqrt{2}$, que es combinación simétrica de gaussianas localizadas en cada pozo.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{figs/fig_08_09_psi_anarmonico.png}
+    \caption{Módulo cuadrado de la función de onda del estado fundamental $|\psi_0(x)|^2$ del oscilador anarmónico. Barras azules (eje Y izquierdo): histograma normalizado de posiciones resultado de la simulación. Línea roja discontinua (eje Y derecho): potencial $V(x)$. \textbf{Paneles 1--3}: $V(x) = \frac{1}{2}\mu^2 x^2 + \lambda x^4$ con $\lambda=1$ y $\mu^2 = +1$ (un solo pozo), $-1$ (doble pozo suave, $x_c=\pm 0.5$) y $-3$ (doble pozo pronunciado, $x_c=\pm 0.87$), donde $x_c^2 = -\mu^2/(4\lambda)$. Parámetros: $m_0 = 1$, $\hbar = 1$, red $N = 200$, $a = 0.5$, $n_r = 10$ cadenas con $n_{\rm therm} = 1\,500$, $n_{\rm meas} = 5\,000$, $n_{\rm skip} = 5$. \textbf{Panel 4}: $V(x) = \lambda(x^2 - f^2)^2$ con $\lambda = 1$, $f^2 = 2$, $m_0 = 0.5$, $a = 0.25$, $N = 200$. La densidad de probabilidad muestra dos picos bien definidos en $\pm x_c = \pm\sqrt{2}\approx\pm 1.41$. Histograma con $80$ puntos en $x \in [-3.5, 3.5]$.}
+    \label{psianarmonico}
+\end{figure}
+
+
+
+\subsection{Niveles de energía y convergencia al continuo}
+\label{nivelesanarmonicosec}
+
+
+Se calculan los dos primeros niveles de energía $E_0$ y $E_1$ del oscilador anarmónico $V = \lambda(x^2 - f^2)^2$ en función de $f^2$, con $\lambda = 1$ y $m_0 = 1/2$. También se estudia si en el cálculo del espectro por el método de Monte Carlo suficientemente fino el espaciado $a$ de la red. \medskip
+
+
+Para el estado fundamental se aplica el teorema del virial, que para este potencial lleva a la expresión
+
+\begin{equation}
+    E_0 = \lambda\!\left(3\braket{x^4} - 4 f^2 \braket{x^2} + f^4\right),
+    \label{virialCR}
+\end{equation}
+
+con $\braket{x^2}$ y $\braket{x^4}$ promediados sobre las configuraciones Monte Carlo. Para el primer estado excitado se utiliza el estimador de la función de correlación \ref{E1mE0}, evaluado a un $\tau$ del orden del paso $a$ (donde el estado base ya domina la suma espectral pero $G(\tau)$ aún destaca sobre el ruido estadístico).
+
+
+Para el estudio de la convergencia se realiza un barrido en $a$ manteniendo el tamaño físico $T = N\!\cdot\!a = 50$ constante (de modo que no cambia la geometría física al refinar la malla):
+
+\begin{equation*}
+    a \in \{0.50,\, 0.25,\, 0.10,\, 0.05\}, \qquad N \in \{100,\, 200,\, 500,\, 1000\}.
+\end{equation*}
+
+La figura \ref{nivelesanarmonico} muestra el resultado: panel izquierdo $E_0$, panel derecho $E_1$, ambos comparados con la teoría del continuo (interpolación de los valores de referencia de Blankenbecler-DeGrand-Sugar \cite{degrand1980numerical}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{figs/fig_10_niveles_anarmonico.png}
+    \caption{Análisis de convergencia de los dos primeros niveles de energía del oscilador $V(x) = \lambda(x^2-f^2)^2$ con $\lambda = 1$ y $m_0 = 1/2$. \textbf{Izquierda}: $E_0$ por teorema del virial \ref{virialCR}. \textbf{Derecha}: $E_1$ por el estimador puntual \ref{E1mE0} aplicado a la función de correlación con $\tau$ escogido como $\tau\sim 1.5/(E_1\!-\!E_0)$ a partir de una estimación inicial de la brecha. Líneas continuas negras: \emph{teoría del continuo} (interpolación de los valores de referencia de \cite{degrand1980numerical}). Puntos con barras de error: Monte Carlo a cuatro espaciados $a \in \{0.50, 0.25, 0.10, 0.05\}$ (de morado a amarillo) con $N$ ajustado para mantener $T = N\!\cdot\!a = 50$ constante. Para cada $(a, f^2)$ se utiliza una única cadena que termaliza durante $n_{\rm therm} = 1\,000$ barridos y luego efectúa $n_{\rm bloques} = 100$ medidas pseudo-independientes separadas por $n_{\rm therm}$ barridos de re-relajación; dentro de cada bloque se promedian $n_{\rm meas} = 1\,000$ medidas con $n_{\rm skip} = 5$ barridos de descorrelación entre medidas. El error se mide como la desviación estándar de la media entre bloques. Para $f^2 > 0$ las cadenas se inicializan en $+x_c$.}
+    \label{nivelesanarmonico}
+\end{figure}
+
+
+En la tabla \ref{tab:niveles} se muestran los valores numéricos para varios valores de $f^2$, junto con los valores de referencia tomados de \cite{degrand1980numerical}, para el espaciado $a=0.25$.\medskip
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{rcccc}
+    \toprule
+    $f^2$ & $E_0^{\rm MC}$ & $E_0^{\rm ref}$ & $E_1^{\rm MC}$ & $E_1^{\rm ref}$ \\
+    \midrule
+    $-1.00$ & $2.499 \pm 0.001$ & $2.678$ & $6.021 \pm 0.001$ & $6.410$ \\
+    $\phantom{-}0.00$ & $0.961 \pm 0.001$ & $1.060$ & $3.556 \pm 0.001$ & $3.800$ \\
+    $\phantom{-}1.00$ & $1.031 \pm 0.001$ & $1.138$ & $2.532 \pm 0.001$ & $2.713$ \\
+    $\phantom{-}2.00$ & $1.957 \pm 0.003$ & $2.290$ & $2.377 \pm 0.003$ & $2.752$ \\
+    $\phantom{-}3.00$ & $2.555 \pm 0.005$ & $3.252$ & $2.679 \pm 0.005$ & $3.293$ \\
+    \bottomrule
+    \end{tabular}
+    \caption{Niveles de energía $E_0$ y $E_1$ del oscilador anarmónico $V(x) = \lambda(x^2-f^2)^2$ ($\lambda = 1$, $m_0 = 1/2$, $\hbar = 1$) en la red $N=200$, $a = 0.25$. Valores de referencia $E_i^{\rm ref}$: Tabla II de Blankenbecler-DeGrand-Sugar \cite{degrand1980numerical} (continuum). $E_0$ por teorema del virial \ref{virialCR}; $E_1$ por el estimador puntual \ref{E1mE0} a $\tau \sim a$ (estado fundamental dominante). Los errores se miden como la desviación estándar de la media entre $n_r = 10$ medidas independientes en una única cadena con $n_{\rm meas} = 15\,000$.}
+    \label{tab:niveles}
+\end{table}
+
+
+Los valores MC reproducen la tendencia de los niveles con respecto a $f^2$, con una desviación sistemática hacia abajo que crece con $f^2$ en el caso de $E_1$, muy probablemente debida al espaciado finito de la red. 
+
+
+
+
+
+
+
+
+
+
+\section{Respuesta a una fuente externa y potencial efectivo}
+
+Si se acopla una fuente externa $J$ al sistema mediante el término adicional $+J\sum_n x_n$ en la acción tal que la nueva acción sea
+
+
+\begin{equation}
+    S' = S + J\sum_n x_n,
+\end{equation}
+
+
+la simetría de reflexión $x \to -x$ se rompe explícitamente y aparece un valor promedio no nulo  $\braket{x}_J \neq 0$. La función $\braket{x}_J$ en función de $J$ se compara con los resultados teóricos para el oscilador armónico y el doble pozo, y se obtiene el potencial efectivo renormalizado $V_R(x)$ a partir de la función inversa $J(\braket{x})$ mediante la integración de \ref{VR}.
+
+
+
+\subsection{Oscilador armónico}
+
+
+Para el oscilador armónico, las ecuaciones del movimiento clásicas con la fuente $+J\cdot x$ tienen la tendencia lineal $J = -\mu^2 x$. En la figura \ref{Jarmonico} se muestra $J \in \{-1, -0.5, -0.25, 0, 0.25, 0.5, 1\}$ en función de $\braket{x}_J$ para el oscilador armónico. La recta de pendiente $-\mu^2$ pasa por todos los puntos dentro del error estadístico.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{figs/fig_11_J_armonico.png}
+    \caption{Respuesta del oscilador armónico a una fuente externa $J$. Puntos negros: Monte Carlo (barras de error inferiores al tamaño del marcador). Línea continua roja: predicción lineal $J = -\mu^2 \braket{x}$. Parámetros: $V(x) = \frac{1}{2}\mu^2 x^2$ con $\mu^2 = 2$, $m_0 = 0.5$, $\hbar = 1$; red $N = 200$, $a = 0.25$. Para cada valor de $J$, $n_r = 10$ cadenas independientes con $n_{\rm therm} = 3\,000$, $n_{\rm meas} = 15\,000$, $n_{\rm skip} = 5$, $\Delta = 0.6$.}
+    \label{Jarmonico}
+\end{figure}
+
+
+
+
+
+\subsection{Oscilador anarmónico}
+
+
+En el caso del doble pozo $V = \lambda(x^2 - f^2)^2$, la relación clásica $J = -dV/dx = -4\lambda x(x^2 - f^2)$ es una cúbica con tres ramas. La curva promedio $\braket{x}_J$ en función de $J$ es, en cambio, monótona y unívoca: el efecto túnel suaviza la transición. En la figura \ref{Jdoblepozo} se compara el resultado de la simulación con la curva clásica.\medskip
+
+Los puntos Monte Carlo siguen las dos ramas externas de la cúbica clásica para $|J|$ grande (\emph{régimen clásico}), ya que el pozo correspondiente domina exponencialmente. Para $|J|$ moderado aparece una desviación sistemática frente a la curva clásica. La rama clásica intermedia (que cruza por el origen) es \emph{inestable} y por tanto inaccesible, dejando un hueco en la región $|\braket{x}|<x_c$: el sistema cuántico no puede estabilizarse en la región intermedia ($|\langle x\rangle|< x_c$). Un comportamiento que la teoría clásica predice erróneamente como estable.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_12_J_doble_pozo.png}
+    \caption{Respuesta del doble pozo a una fuente externa $J$. Puntos negros: Monte Carlo. Línea continua roja: predicción clásica $J = -dV/dx = -4\lambda x(x^2 - f^2)$. Línea discontinua negra: guía de los puntos MC. Líneas verticales grises: mínimos clásicos $\pm x_c = \pm\sqrt{2}$. Parámetros: $V(x) = \lambda(x^2 - f^2)^2$ con $\lambda = 1$, $f^2 = 2$, $m_0 = 0.5$, $\hbar = 1$; red $N = 400$, espaciado $a = 0.05$. Para cada $J$ se promedió sobre $n_r = 10$ cadenas con $n_{\rm therm} = 3\,000$, $n_{\rm meas} = 15\,000$, $n_{\rm skip} = 5$, $\Delta = 0.6$.}
+    \label{Jdoblepozo}
+\end{figure}
+
+
+
+\newpage
+
+\subsection{Potencial efectivo renormalizado}
+
+
+Integrando $J(x_J)$ con respecto a $x_J$ en la expresión $V_R'(x_J) = -J(x_J)$ se obtiene el potencial efectivo \ref{VR}. En particular, para el doble pozo $V_R$ presenta un único mínimo en $x_J = 0$, al contrario del potencial clásico que tiene dos mínimos degenerados en $\pm x_c$.
+
+En la figura \ref{VRarmonico} se muestra el potencial efectivo $V_R(x_J)$ obtenido por la simulación para el oscilador armónico y la curva clásica superpuesta. La concordancia es perfecta, el potencial clásico es cuadrático, y el potencial efectivo coincide exactamente con él.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_13_VR_armonico.png}
+    \caption{Potencial efectivo renormalizado $V_R(x_J)$ del oscilador armónico. Puntos negros: integración trapezoidal de los datos Monte Carlo de la figura \ref{Jarmonico} con $V_R(x_J) = -\int_{0}^{x_J} J(x')\, dx'$. Línea continua roja: forma cuadrática teórica $V_R = \frac12 \mu^2 x^2 = x^2$. Parámetros: $V(x) = \frac{1}{2}\mu^2 x^2$ con $\mu^2 = 2$, $m_0 = 0.5$, $\hbar = 1$, red $N=200$, espaciado $a = 0.25$.}
+    \label{VRarmonico}
+\end{figure}
+
+Para el doble pozo, en cambio, el resultado de la simulación no se adecúa al potencial clásico: el potencial efectivo cuántico $V_R$ es convexo (un solo mínimo) frente al clásico (doble pozo con dos mínimos degenerados). La figura \ref{VRdoble} muestra $V_R(x_J)$ simulado con la curva clásica $\lambda(x^2 - f^2)^2$ superpuesta.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_14_VR_doble_pozo.png}
+    \caption{Potencial efectivo renormalizado $V_R(x_J)$ del doble pozo. Puntos negros conectados: integración trapezoidal de los datos Monte Carlo de la figura \ref{Jdoblepozo} con $V_R(x_J) = -\int J(x')\,dx'$. Línea discontinua roja: potencial clásico $V_{\rm clas}(x) = \lambda(x^2 - f^2)^2 - \lambda f^4$. Líneas verticales grises: $\pm x_c = \pm\sqrt{2}$. Parámetros: $\lambda = 1$, $f^2 = 2$, $m_0 = 0.5$, $\hbar = 1$, red $N=200$, espaciado $a = 0.1$.}
+    \label{VRdoble}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Doble pozo: instantones y efecto túnel}
+\label{secdoblepozo}
+
+
+Los instantones son configuraciones clásicas finitas en tiempo euclídeo que minimizan localmente $S_E$ y conectan los dos mínimos del potencial. Para el doble pozo $V = \lambda(x^2 - f^2)^2$ la ecuación euclídea del movimiento es
+
+\begin{equation}
+    m_0 \frac{d^2 x}{d\tau^2} = \frac{dV}{dx} = 4\lambda x(x^2 - f^2),
+    \label{eulerlagrange}
+\end{equation}
+
+cuya solución de kink (instantón) y antikink (antiinstantón) es
+
+\begin{equation}
+    x_{\pm}(\tau) = \pm x_c \tanh\!\left( \sqrt{\frac{2\lambda}{m_0}}\, x_c\, (\tau - \tau_0) \right),
+    \label{kinkclasico}
+\end{equation}
+
+con $x_c = \sqrt{f^2}$ y $\tau_0$ una coordenada colectiva (la posición temporal del centro del kink). La acción de un kink aislado es
+
+\begin{equation}
+    S_{\rm inst} = \frac{2\sqrt{2}}{3}\sqrt{\lambda m_0}\, x_c^3 = \frac{2\sqrt{2}}{3}\sqrt{\lambda m_0}\, f^3,
+\end{equation}
+
+de modo que la contribución al efecto túnel entre pozos es $\sim e^{-S_{\rm inst}}$ y crece con $f^3$, reproduciendo el comportamiento exponencial de la sección anterior.
+
+
+
+\subsection{Un kink aislado}
+
+
+Para forzar la aparición de un número impar de kinks se imponen condiciones de contorno antiperiódicas $x_N = -x_0$ en lugar de periódicas. La paridad topológica del campo obliga a que exista al menos un cruce entre los dos pozos. En la figura \ref{kinkfig} se muestra una configuración termalizada de la red con dichas condiciones.\medskip
+
+
+
+La configuración Monte Carlo sigue la tendencia de la solución clásica \ref{kinkclasico} excepto por las fluctuaciones estadísticas, que se anularían al tomar un número elevado de realizaciones. Se ha tomado un pozo de profundidad $f^2=4$; se observa que las fluctuaciones estadísticas quedan contenidas entre los puntos de retorno clásicos $\pm x_1$ y $\pm x_2$ y se aprecia una transición tipo escalón. El ancho característico del kink es $\sqrt{m_0/(2\lambda f^2)} = 0.25$ y la transición entre $-x_c$ y $+x_c$ ocurre aproximadamente en el centro de la red, $\tau_0 = T/2 = 25$, con una muy buena concordancia con la solución clásica superpuesta en la figura \ref{kinkfig}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_15_kink_simple.png}
+    \caption{Configuración termalizada de la red con condiciones de contorno antiperiódicas ($x_N = -x_0$) para el doble pozo $V(x) = \lambda(x^2-f^2)^2$ con $\lambda = 1$, $f^2 = 4$ (mínimos clásicos en $\pm x_c = \pm 2$, líneas discontinuas grises). Las líneas discontinuas azules y verdes indican los puntos de retorno clásicos $\pm x_1 = \pm\sqrt{f^2(1-1/\sqrt{2})}\approx \pm 1.08$  y $\pm x_2 = \pm\sqrt{f^2(1+1/\sqrt{2})}\approx \pm 2.61$ ; las fluctuaciones estadísticas quedan confinadas entre ambos. En rojo se superpone la solución clásica del instantón $x(\tau) = x_c\tanh\!\bigl[\sqrt{2\lambda/m_0}\,x_c(\tau-\tau_0)\bigr]$ centrada en $\tau_0 = T/2$. El eje $X$ inferior indica la posición temporal $n$ y el eje $X$ superior el tiempo euclídeo $\tau = n\,a$; el eje $Y$ izquierdo corresponde a la configuración MC $x_n$ y el eje derecho $Y$ a la solución clásica $x(\tau)$, ambos en la misma escala. Parámetros: $m_0 = 0.5$, $\hbar = 1$, red $N_{\rm KINK} = 200$ puntos, espaciado $a = 0.25$, $\Delta = 0.5$; inicialización en escalón $x_n = -x_c$ para $n < N/2$ y $x_n = +x_c$ para $n \ge N/2$, seguida de $200$ iteraciones de termalización.}
+    \label{kinkfig}
+\end{figure}
+
+
+
+\subsection{Aniquilación de un par kink--antikink}
+
+
+Los kinks son objetos topológicos: en una red con condiciones de contorno fijadas a $+x_c$ en ambos extremos, el número total de kinks menos el número de antikinks debe de ser nulo, aunque pueden existir configuraciones con pares $(k, \bar k)$ que se aniquilan mutuamente. Inicializando la red con un kink seguido de un antikink y dejando evolucionar el sistema, el par se acerca por interacción atractiva y termina aniquilándose tras un número finito de barridos.\medskip
+
+
+La figura \ref{aniquilacionfig} muestra este proceso, el par kink--antikink  se aniquila mutuamente en torno a la iteración $\sim 150$, a partir de dicho punto la red está dominada por el pozo $+x_c$ con sólo las fluctuaciones estadísticas en torno a este valor.
+
+La simulación recupera de forma natural los efectos topológicos esperados de los instantones. El método de Monte Carlo acierta en la predicción teórica, ya que la suma de todas las configuraciones incluye automáticamente todos los comportamientos topológicos pesados con su acción. \medskip
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/fig_17_aniquilacion_kinks.png}
+    \caption{Evolución Monte Carlo de un par kink--antikink en una red de $N_{\rm ANIQUI} = 80$ puntos con condiciones de contorno fijas $x_0 = x_{N-1} = +x_c$ (ambos extremos al mismo pozo). Parámetros: $V(x) = \lambda(x^2-f^2)^2$ con $\lambda = 1$, $f^2 = 2$, $m_0 = 0.5$, $a = 0.25$, $\Delta = 0.5$, $\hbar = 1$. Inicialización: $x_n = +x_c$ excepto $x_n = -x_c$ para $n\in[38,42]$ (par kink--antikink centrado, separados por $4$ puntos). Cada línea es una configuración tras $15$ iteraciones y se evoluciona verticalmente de $0$ a $300$.}
+    \label{aniquilacionfig}
+\end{figure}
+
+
+
+\section{Conclusiones}
+
+
+Se ha reproducido el método numérico descrito por Creutz y Freedman \cite{creutz1981statistical} para evaluar la integral de caminos euclídea en mecánica cuántica unidimensional mediante el algoritmo $M(RT)^2$. La equivalencia formal entre la integral de caminos en tiempo imaginario y la función de partición de un sistema estadístico clásico permite reducir un problema cuántico a un problema de muestreo: la densidad de configuraciones de la red en el equilibrio es $|\psi_0(x)|^2$ y los valores esperados de los observables cuánticos se obtienen como promedios estadísticos.
+
+El método se ha validado sobre el oscilador armónico, donde tanto la función de onda del estado base como su energía $E_0 = 0.4849 \pm 0.0005$ se han recuperado con desviaciones inferiores al $3\%$ respecto a los valores analíticos. Las pequeñas discrepancias se deben al espaciado finito $a$ y se pueden corregir tomando el límite $a \to 0$ con $T = Na$ fijo.
+
+En el oscilador anarmónico la simulación describe el cruce entre el régimen de pozo único y el de doble pozo a medida que se varía $f^2 = -\mu^2/(2\lambda)$. La energía $E_0$ disminuye monótonamente con $f^2$ y los niveles excitados, aunque más ruidosos, presentan un comportamiento físicamente correcto. Para los parámetros simulados ($|\mu^2| \le 3$, $\lambda = 1$) la barrera es comparable a la energía del punto cero y la distribución $|\psi_0(x)|^2$ permanece esencialmente unimodal.
+
+Además, el acoplamiento con una fuente externa $J$ ha permitido construir el potencial efectivo renormalizado $V_R(x_J)$. El resultado para el doble pozo es que $V_R$ presenta un único mínimo en $x_J = 0$, en contraste con los dos mínimos del potencial clásico.
+
+Finalmente, el estudio del doble pozo con $V = \lambda(x^2-f^2)^2$ y condiciones de frontera antiperiódicas ha revelado la presencia natural de configuraciones de tipo kink. El proceso de aniquilación de un par kink--antikink se reproduce de forma automática como parte de la dinámica Monte Carlo, lo que muestra cómo la integral de caminos incluye  todos los comportamientos topológicos pesados con su acción.
+
+
+
+La comparación con los valores de referencia de Blankenbecler, DeGrand y Sugar \cite{degrand1980numerical}, obtenidos por un método independiente basado en la recursión de momentos, confirma la precisión de método de Monte Carlo. En el régimen de pozo único y barrera moderada el acuerdo en $E_0$ se mantiene por debajo del $3\%$ y aumenta a $\sim 8.5\%$ para los pozos más profundos ($f^2 = 5$), una desviación debida al efecto del espaciado finito $a$ de la red.
+
+
+
+
+\newpage
+
+
+\bibliographystyle{plain}
+\bibliography{bibliografia}
+
+
+
+
+\end{document}
