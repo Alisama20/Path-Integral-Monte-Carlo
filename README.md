@@ -203,4 +203,4 @@ python scripts/03_pozo_doble.py
 
 **A. S. Amari Rabah**
 
-Developed as part of the coursework for *Computational Methods in Quantum Physics* — Master's Degree in Physics: Radiation, Nanotechnology, Particles and Astrophysics, University of Granada, Spain.
+Developed as part of the coursework for *Computational Methods in Non-Linear Physics* — Master's Degree in Physics and Mathematics - Fisymat, University of Granada, Spain.
