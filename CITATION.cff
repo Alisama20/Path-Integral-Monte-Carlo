@@ -14,7 +14,7 @@ authors:
 version: "1.0.0"
 date-released: "2026-07-14"
 url: "https://github.com/Alisama20/Path-Integral-Monte-Carlo"
-license: GPL-3.0
+license: GPL-2.0
 keywords:
   - path integral
   - Monte Carlo
