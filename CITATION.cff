@@ -1,0 +1,48 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Path-Integral-Monte-Carlo"
+abstract: >
+  Lattice Monte Carlo simulation of quantum mechanics in Euclidean (imaginary)
+  time. Implements the Metropolis algorithm on a discrete path-integral lattice
+  to compute ground-state wavefunctions, energy levels, effective potentials,
+  and instanton configurations. Validated against the Blankenbecler-DeGrand-Sugar
+  benchmark (Creutz & Freedman 1981).
+authors:
+  - family-names: "Amari Rabah"
+    given-names: "Ali-Salem"
+    affiliation: "University of Granada"
+version: "1.0.0"
+date-released: "2026-07-14"
+url: "https://github.com/Alisama20/Path-Integral-Monte-Carlo"
+license: GPL-3.0
+keywords:
+  - path integral
+  - Monte Carlo
+  - quantum mechanics
+  - instantons
+  - lattice field theory
+references:
+  - type: article
+    authors:
+      - family-names: Creutz
+        given-names: Michael
+      - family-names: Freedman
+        given-names: Barry
+    title: "A statistical approach to quantum mechanics"
+    journal: "Annals of Physics"
+    volume: 132
+    year: 1981
+    doi: "10.1016/0003-4916(81)90074-9"
+  - type: article
+    authors:
+      - family-names: Blankenbecler
+        given-names: R.
+      - family-names: DeGrand
+        given-names: T.
+      - family-names: Sugar
+        given-names: R. L.
+    title: "Monte Carlo calculations in lattice gauge theories"
+    journal: "Physical Review D"
+    volume: 21
+    year: 1980
+    doi: "10.1103/PhysRevD.21.1055"
